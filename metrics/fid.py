@@ -29,7 +29,7 @@ import utils
 dnnlib.tflib.init_tf()
 tf_config = {'rnd.np_random_seed': 1000}
 
-download.from_google_drive('1CIDc9i070KQhHlkr4yIwoJC8xqrwjE0_', directory="metrics")
+#download.from_google_drive('1CIDc9i070KQhHlkr4yIwoJC8xqrwjE0_', directory="metrics")
 
 
 class FID:
@@ -168,5 +168,5 @@ def sample(cfg, logger):
 
 if __name__ == "__main__":
     gpu_count = 1
-    run(sample, get_cfg_defaults(), description='ALAE-fid', default_config='configs/ffhq.yaml',
-        world_size=gpu_count, write_log="metrics/fid_score.txt")
+    run(sample, get_cfg_defaults(), description='ALAE-fid', default_config='configs/celeba.yaml',
+        world_size=gpu_count, write_log="metrics/fid.txt")

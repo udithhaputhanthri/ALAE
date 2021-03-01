@@ -30,8 +30,8 @@ from model import Model
 from launcher import run
 from defaults import get_cfg_defaults
 import lod_driver
-from PIL import Image
-
+from PIL import Image, ImageOps
+import cv2
 
 def save_sample(lod2batch, tracker, sample, samplez, x, logger, model, cmodel, cfg, encoder_optimizer, decoder_optimizer):
     os.makedirs('results', exist_ok=True)
@@ -60,9 +60,9 @@ def save_sample(lod2batch, tracker, sample, samplez, x, logger, model, cmodel, c
             sample_in_prev = F.avg_pool2d(sample_in, 2, 2)
             sample_in_prev_2x = F.interpolate(sample_in_prev, needed_resolution)
             sample_in = sample_in * blend_factor + sample_in_prev_2x * (1.0 - blend_factor)
-
+        logger.info("SAVING SAMPLE: BEFORE ENCODING")
         Z, _ = model.encode(sample_in, lod2batch.lod, blend_factor)
-
+        logger.info("SAVING SAMPLE: AFTER ENCODING")
         if cfg.MODEL.Z_REGRESSION:
             Z = model.mapping_f(Z[:, 0])
         else:
@@ -229,6 +229,33 @@ def train(cfg, logger, local_rank, world_size, distributed):
         path = cfg.DATASET.SAMPLES_PATH
         src = []
         with torch.no_grad():
+            reshape=256 # should be greater than required all image shapes
+            if 'mnist' in path:gray=True # MNIST are gray
+            else:gray=False
+            for filename in list(os.listdir(path))[:32]:
+                if not gray:
+                  img = np.asarray(Image.open(os.path.join(path, filename)))
+                  img = cv2.resize(img, (reshape,reshape), interpolation = cv2.INTER_AREA)
+                  
+                  if img.shape[2] == 4:
+                      img = img[:, :, :3]
+                  im = img.transpose((2, 0, 1))
+                  x = torch.tensor(np.asarray(im, dtype=np.float32), requires_grad=True).cuda() / 127.5 - 1.
+                  if x.shape[0] == 4:
+                      x = x[:3]
+                  src.append(x)
+                else:
+                  img = np.asarray(ImageOps.grayscale(Image.open(os.path.join(path, filename))))
+                  img = cv2.resize(img, (reshape,reshape), interpolation = cv2.INTER_AREA)
+
+                  img = np.expand_dims(img, 2)
+                  im = img.transpose((2, 0, 1))
+                  x = torch.tensor(np.asarray(im, dtype=np.float32), requires_grad=True).cuda() / 127.5 - 1.
+                  src.append(x)
+            sample = torch.stack(src)
+
+
+            ''' # ORIGINAL CODE
             for filename in list(os.listdir(path))[:32]:
                 img = np.asarray(Image.open(os.path.join(path, filename)))
                 if img.shape[2] == 4:
@@ -239,6 +266,7 @@ def train(cfg, logger, local_rank, world_size, distributed):
                     x = x[:3]
                 src.append(x)
             sample = torch.stack(src)
+            '''
     else:
         dataset.reset(cfg.DATASET.MAX_RESOLUTION_LEVEL, 32)
         sample = next(make_dataloader(cfg, logger, dataset, 32, local_rank))
@@ -260,8 +288,9 @@ def train(cfg, logger, local_rank, world_size, distributed):
                                                                 len(dataset) * world_size))
 
         dataset.reset(lod2batch.get_lod_power2(), lod2batch.get_per_GPU_batch_size())
+        logger.info('before make_dataloader')
         batches = make_dataloader(cfg, logger, dataset, lod2batch.get_per_GPU_batch_size(), local_rank)
-
+        logger.info('after dataloader')
         scheduler.set_batch_size(lod2batch.get_batch_size(), lod2batch.lod)
 
         model.train()
@@ -342,6 +371,6 @@ def train(cfg, logger, local_rank, world_size, distributed):
 
 
 if __name__ == "__main__":
-    gpu_count = torch.cuda.device_count()
+    gpu_count = 1 #torch.cuda.device_count()
     run(train, get_cfg_defaults(), description='StyleGAN', default_config='configs/ffhq.yaml',
         world_size=gpu_count)

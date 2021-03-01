@@ -6,8 +6,8 @@ DATASET:
   PART_COUNT: 16
   SIZE: 182637
   SIZE_TEST: 202576 - 182637
-  PATH: /data/datasets/celeba/tfrecords/celeba-r%02d.tfrecords.%03d
-  PATH_TEST: /data/datasets/celeba-test/tfrecords/celeba-r%02d.tfrecords.%03d
+  PATH: /home/udith/data/datasets/celeba/tfrecords/celeba-r%02d.tfrecords.%03d
+  PATH_TEST: /home/udith/data/datasets/celeba-test/tfrecords/celeba-r%02d.tfrecords.%03d
   MAX_RESOLUTION_LEVEL: 7
 
   SAMPLES_PATH: dataset_samples/faces/realign128x128

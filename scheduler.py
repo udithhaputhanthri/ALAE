@@ -21,6 +21,7 @@ class WarmupMultiStepLR(torch.optim.lr_scheduler._LRScheduler):
                 milestones,
             )
         self.milestones = milestones
+        self.verbose=True # by udith
         self.gamma = gamma
         self.warmup_factor = warmup_factor
         self.warmup_iters = warmup_iters

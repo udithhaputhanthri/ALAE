@@ -25,8 +25,8 @@ from matplotlib import pyplot as plt
 
 dnnlib.tflib.init_tf()
 
-download.from_google_drive('1CIDc9i070KQhHlkr4yIwoJC8xqrwjE0_', directory="metrics")
-
+#download.from_google_drive('1CIDc9i070KQhHlkr4yIwoJC8xqrwjE0_', directory="metrics")
+# uploaded the file manually !!!
 
 # Normalize batch of vectors.
 def normalize(v):
@@ -217,4 +217,4 @@ def sample(cfg, logger):
 if __name__ == "__main__":
     gpu_count = 1
     run(sample, get_cfg_defaults(), description='ALAE-ppl', default_config='configs/ffhq.yaml',
-        world_size=gpu_count, write_log=False)
+        world_size=gpu_count, write_log='ppl.txt')

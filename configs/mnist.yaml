@@ -2,10 +2,11 @@ DATASET:
   PART_COUNT: 1
   SIZE: 60000
   # PATH: /data/datasets/mnist/tfrecords/mnist-r%02d.tfrecords.%03d
-  PATH: /data/datasets/mnist32/tfrecords/mnist-r%02d.tfrecords.%03d
-  PATH_TEST: /data/datasets/mnist32/tfrecords/mnist_test-r%02d.tfrecords.%03d
+  PATH: /home/udith/data/datasets/mnist32/tfrecords/mnist-r%02d.tfrecords.%03d
+  PATH_TEST: /home/udith/data/datasets/mnist32/tfrecords/mnist_test-r%02d.tfrecords.%03d
   MAX_RESOLUTION_LEVEL: 5
   FLIP_IMAGES: False
+  SAMPLES_PATH: mnist_test_imgs
 MODEL:
   LATENT_SPACE_SIZE: 32
   LAYER_COUNT: 4

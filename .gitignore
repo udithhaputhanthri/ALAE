@@ -9,3 +9,13 @@ __pycache__/
 *.eps
 *.txt
 results*/
+
+
+## UDITH:
+*.zip
+*results_images
+*.pth
+img_align_celeba
+*.pkl
+
+

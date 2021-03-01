@@ -29,6 +29,7 @@ import tensorflow as tf
 import imageio
 from PIL import Image
 
+# ALL DIRECTORIS HAVE BEEN CHANGED: UDITH
 
 def prepare_celeba(cfg, logger, train=True):
     if train:
@@ -36,7 +37,7 @@ def prepare_celeba(cfg, logger, train=True):
     else:
         directory = os.path.dirname(cfg.DATASET.PATH_TEST)
 
-    with open("/data/datasets/CelebA/Eval/list_eval_partition.txt") as f:
+    with open("/home/udith/data/datasets/CelebA/Eval/list_eval_partition.txt") as f:
         lineList = f.readlines()
     lineList = [x[:-1].split(' ') for x in lineList]
 
@@ -74,7 +75,7 @@ def prepare_celeba(cfg, logger, train=True):
         i = int(round((w - crop_w)/2.))
         return np.array(Image.fromarray(x[j:j+crop_h, i:i+crop_w]).resize([resize_w, resize_w]))
 
-    archive = zipfile.ZipFile(os.path.join(directory, '/data/datasets/CelebA/Img/img_align_celeba.zip'), 'r')
+    archive = zipfile.ZipFile(os.path.join(directory, '/home/udith/data/datasets/CelebA/Img/img_align_celeba.zip'), 'r')
 
     names = archive.namelist()
 
@@ -103,7 +104,7 @@ def prepare_celeba(cfg, logger, train=True):
         # Has format of
         # 000001.jpg 2880
         # 000002.jpg 2937
-        with open("/data/datasets/CelebA/Anno/identity_CelebA.txt") as f:
+        with open("/home/udith/data/datasets/CelebA/Anno/identity_CelebA.txt") as f:
             lineList = f.readlines()
 
         lineList = [x[:-1].split(' ') for x in lineList]
@@ -112,7 +113,7 @@ def prepare_celeba(cfg, logger, train=True):
         for x in lineList:
             identity_map[x[0]] = int(x[1])
 
-        names = [(identity_map[x.split('/')[1]], x) for x in names]
+        names = [(identity_map[x.split('/')[-1]], x) for x in names] ## EDITED: UDITH
 
         class_bins = {}
 
