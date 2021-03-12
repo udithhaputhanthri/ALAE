@@ -17,5 +17,7 @@ results*/
 *.pth
 img_align_celeba
 *.pkl
-
+cityscapes
+edges2shoes
+facades
 
