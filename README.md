@@ -1,3 +1,19 @@
+# Steps to utilize on new dataset:
+
+1. Download dataset and resize it to desired size then store it to some "dataset_dir".
+2. Create sample data directories and store ~150 resized images (eg:dataset_samples/dataset_name)
+3. Create config file:
+   * Change NAME, DATASET:SIZE SIZE_TEST, PATH, PATH_TEST, SAMPLES_PATH, OUTPUT_DIR and MODEL parameters if required
+4. Create dataset preparation script
+   * create prepare_{dataset_name}\_tfrecords.py
+   * change source_path="dataset_dir", default config file
+5. Prepare tfrecord dataset using "prepare_{dataset_name}\_tfrecords.py"
+6. run train_alae.py with config file
+
+See this [example notebook](https://colab.research.google.com/drive/1Cv1Ty2PlxJIJuXogeehTfd995WGqmRzk?authuser=1#scrollTo=CsLwh0q_ECG2) for details.
+
+
+
 <h1 align="center">
   <br>
   [CVPR2020] Adversarial Latent Autoencoders
