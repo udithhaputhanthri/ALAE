@@ -4,7 +4,7 @@
 2. Create sample data directories and store ~150 resized images (eg:dataset_samples/dataset_name)
 3. Create config file:
    * Change NAME, DATASET:SIZE SIZE_TEST, PATH, PATH_TEST, SAMPLES_PATH, OUTPUT_DIR and MODEL parameters if required
-4. Create dataset preparation script
+4. Create dataset preparation script (use prepare_celeba_hq_tfrecords.py)
    * create prepare_{dataset_name}\_tfrecords.py
    * change source_path="dataset_dir", default config file
 5. Prepare tfrecord dataset using "prepare_{dataset_name}\_tfrecords.py"
