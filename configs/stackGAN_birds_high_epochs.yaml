@@ -1,0 +1,33 @@
+# Config for training ALAE on CelebA-HQ at resolution 256x256
+
+NAME: stackGAN-birds
+DATASET:
+  PART_COUNT: 16
+  SIZE: 8055
+  SIZE_TEST: 800
+  PATH: /home/udith/data/datasets/stackgan-birds/tfrecords/birds-r%02d.tfrecords.%03d
+  PATH_TEST: /home/udith/data/datasets/stackgan-birds-test/tfrecords/birds-r%02d.tfrecords.%03d
+  MAX_RESOLUTION_LEVEL: 8
+  SAMPLES_PATH: dataset_samples/stackGANbirds
+  STYLE_MIX_PATH: style_mixing/test_images/set_ffhq
+MODEL:
+  LATENT_SPACE_SIZE: 512
+  LAYER_COUNT: 7
+  MAX_CHANNEL_COUNT: 512
+  START_CHANNEL_COUNT: 64
+  DLATENT_AVG_BETA: 0.995
+  MAPPING_LAYERS: 8
+OUTPUT_DIR: training_artifacts/stackgan-birds_high_epochs
+TRAIN:
+  BASE_LEARNING_RATE: 0.002
+  EPOCHS_PER_LOD: 250
+  LEARNING_DECAY_RATE: 0.1
+  LEARNING_DECAY_STEPS: []
+  TRAIN_EPOCHS: 5000
+  #                    4       8       16       32       64       128        256       512       1024
+  LOD_2_BATCH_8GPU: [512,    256,     128,      64,      32,       32,        32,       32,        24]
+  LOD_2_BATCH_4GPU: [512,    256,     128,      64,      32,       32,        32,       32,        16]
+  LOD_2_BATCH_2GPU: [128,    128,     128,      64,      32,       32,        16]
+  LOD_2_BATCH_1GPU: [128,    128,     128,      64,      32,       16]
+
+  LEARNING_RATES: [0.0015,  0.0015,   0.0015,   0.0015,  0.0015,   0.0015,     0.0015,     0.003,    0.003]
