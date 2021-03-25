@@ -129,8 +129,10 @@ class Model(nn.Module):
 
                 ## added by udith
                 #print('*************************************************************************',Z.shape, s.shape)
-                g_w = rec = self.decoder.forward(Z.repeat(1, self.mapping_f.num_layers, 1), lod, blend_factor, True)
-                g_w_hat = rec = self.decoder.forward(s.repeat(1, self.mapping_f.num_layers, 1), lod, blend_factor, True)
+                Z_detached, _= self.encode(rec.detach(), lod, blend_factor) ## detach -> to break the cycle -> decoder, encoder part will be trained only once
+                
+                g_w = self.decoder.forward(s.repeat(1, self.mapping_f.num_layers, 1), lod, blend_factor, True)
+                g_w_hat  = self.decoder.forward(Z_detached.repeat(1, self.mapping_f.num_layers, 1), lod, blend_factor, True)
                 #print('*************************************************************************',g_w.shape, g_w_hat.shape)
                 #raise NameError(f'Udith: Hi you are running well :: L1_image_loss : {l1_image} | total_loss : {Lae + l1_image}' )
                 #print(f'Udith: you are running well :: L1_image_loss : {l1_image} | l1_W_loss (lae) : {Lae} | total_loss : {Lae + l1_image}')
@@ -147,7 +149,7 @@ class Model(nn.Module):
                     tot_loss+= loss_frac*Lae
                   else:
                     #summary += f' {loss_type} : {loss_frac*get_loss(g_w_hat, g_w , loss_type)} ::: '
-                    tot_loss+= loss_frac*get_loss(g_w_hat, g_w.detach() , loss_type)
+                    tot_loss+= loss_frac*get_loss(g_w_hat, g_w.detach() , loss_type) # target is detached
                 #print(summary)  
                 return tot_loss
                 ## added by udith
@@ -231,3 +233,4 @@ class GenModel(nn.Module):
 
     def forward(self, x):
         return self.generate(self.layer_count-1, 1.0, z=x)
+
