@@ -76,12 +76,15 @@ class Model(nn.Module):
 
         styles = s.repeat(1, self.mapping_f.num_layers, 1)
 
-        if self.dlatent_avg_beta is not None:
+        if self.dlatent_avg_beta is not None: ## this is working on training -> and update self.dlatent_avg.buff.data register | but could not find where it will be using
+            #print(f'1/ 3 ifs : self.dlatent_avg_beta is not None')
             with torch.no_grad():
                 batch_avg = styles.mean(dim=0)
                 self.dlatent_avg.buff.data.lerp_(batch_avg.data, 1.0 - self.dlatent_avg_beta)
+        #else:print('NO : 1/ 3 ifs')
 
         if mixing and self.style_mixing_prob is not None:
+            #print('2/ 3 ifs : mixing and self.style_mixing_prob is not None')
             if random.random() < self.style_mixing_prob:
                 z2 = torch.randn(count, self.latent_size)
                 styles2 = self.mapping_f(z2)[:, 0]
@@ -91,13 +94,14 @@ class Model(nn.Module):
                 cur_layers = (lod + 1) * 2
                 mixing_cutoff = random.randint(1, cur_layers)
                 styles = torch.where(layer_idx < mixing_cutoff, styles, styles2)
-
+        #else:print('NO : 2/ 3 ifs')
         if (self.truncation_psi is not None) and not no_truncation:
+            #print('3/ 3 ifs : (self.truncation_psi is not None) and not no_truncation')
             layer_idx = torch.arange(self.mapping_f.num_layers)[np.newaxis, :, np.newaxis]
             ones = torch.ones(layer_idx.shape, dtype=torch.float32)
             coefs = torch.where(layer_idx < self.truncation_cutoff, self.truncation_psi * ones, ones)
             styles = torch.lerp(self.dlatent_avg.buff.data, styles, coefs)
-
+        #else:print('NO : 3/ 3 ifs')
         rec = self.decoder.forward(styles, lod, blend_factor, noise)
         if return_styles:
             return s, rec
@@ -109,7 +113,9 @@ class Model(nn.Module):
         discriminator_prediction = self.mapping_d(Z)
         return Z[:, :1], discriminator_prediction
 
-    def forward(self, x, lod, blend_factor, d_train, ae, loss_fracs=None, loss_types=None):
+    def forward(self, x, lod, blend_factor, d_train, ae, loss_fracs=None, loss_types=None): 
+        # blend_factor -> is not used for mixing styles but mixing different resolution levels in same image : search "ENCODERS/ DECODERS" in https://github.com/udithhaputhanthri/ALAE/blob/master/net.py
+        
         if ae:
             self.encoder.requires_grad_(True)
 
@@ -129,10 +135,31 @@ class Model(nn.Module):
 
                 ## added by udith
                 #print('*************************************************************************',Z.shape, s.shape)
-                Z_detached, _= self.encode(rec.detach(), lod, blend_factor) ## detach -> to break the cycle -> decoder, encoder part will be trained only once
+
+                g_w = rec.detach() #self.decoder.forward(s.repeat(1, self.mapping_f.num_layers, 1), lod, blend_factor, True) ## CANT WE USE ABOVE-OBTAINED "REC" HERE 
+                # above line : detach -> to break the cycle -> decoder, encoder part will be trained only once
                 
-                g_w = self.decoder.forward(s.repeat(1, self.mapping_f.num_layers, 1), lod, blend_factor, True)
+                g_w.requires_grad=False # so g_w will not updated through image_space_loss
+                Z_detached, _= self.encode(g_w, lod, blend_factor) 
+                
+                #print('*** G_W.requires_grad -> should be freezed (so should be: False) : ',g_w.requires_grad)
+                #print('*** rec.requires_grad -> should not be freezed | because we are not using it (so should be: True) : ',rec.requires_grad)
+                
+                # below, the requires_grad= False for Generator network when generating g_w_hat:
+                # Note that this and above-rec.detach() ensures that the weight updating due to image_space_loss (added new) only affects to the Encoder part (I -> w network) of the overall model
+                # W want this because, when we do rec.detach(), we wanted to keep rec as constant. In order to do that, we should not update the generator (It will be updating through LAE and GAN losses)
+                # To do that, we should remove the Generator from computational graph when decoding the w_hat
+
+                for param in self.decoder.parameters(): # use model.decoder.parameters(): to access all parameters of model.decoder
+                  param.requires_grad=False
+                  #print('off gradient computation : ',param.requires_grad, param.shape)
+                
                 g_w_hat  = self.decoder.forward(Z_detached.repeat(1, self.mapping_f.num_layers, 1), lod, blend_factor, True)
+                
+                for param in self.decoder.parameters(): # use model.decoder.parameters(): to access all parameters of model.decoder
+                  param.requires_grad=True
+                  #print('on gradient computation : ',param.requires_grad, param.shape)
+                
                 #print('*************************************************************************',g_w.shape, g_w_hat.shape)
                 #raise NameError(f'Udith: Hi you are running well :: L1_image_loss : {l1_image} | total_loss : {Lae + l1_image}' )
                 #print(f'Udith: you are running well :: L1_image_loss : {l1_image} | l1_W_loss (lae) : {Lae} | total_loss : {Lae + l1_image}')
@@ -145,12 +172,12 @@ class Model(nn.Module):
                   loss_frac = loss_fracs[i]
                   
                   if loss_type =='lae':
-                    #summary += f" {loss_type} : {loss_frac*Lae} ::: "
+                    summary += f" {loss_type} : {loss_frac*Lae} ::: "
                     tot_loss+= loss_frac*Lae
                   else:
-                    #summary += f' {loss_type} : {loss_frac*get_loss(g_w_hat, g_w , loss_type)} ::: '
-                    tot_loss+= loss_frac*get_loss(g_w_hat, g_w.detach() , loss_type) # target is detached
-                #print(summary) 
+                    summary += f' {loss_type} : {loss_frac*get_loss(g_w_hat, g_w , loss_type)} ::: '
+                    tot_loss+= loss_frac*get_loss(g_w_hat, g_w , loss_type) # target is detached
+                #print(summary)  
                 return tot_loss
                 ## added by udith
 
@@ -233,4 +260,6 @@ class GenModel(nn.Module):
 
     def forward(self, x):
         return self.generate(self.layer_count-1, 1.0, z=x)
+
+
 
