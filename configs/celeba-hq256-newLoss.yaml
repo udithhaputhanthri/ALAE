@@ -17,9 +17,9 @@ MODEL:
   START_CHANNEL_COUNT: 64
   DLATENT_AVG_BETA: 0.995
   MAPPING_LAYERS: 8
-OUTPUT_DIR: training_artifacts/celeba-hq256-onlyL2
+OUTPUT_DIR: training_artifacts/celeba-hq256-exp1
 LOSS:
-  fracs: [0, 0, 1]
+  fracs: [10, 0, 0]
   types: ['lae', 'l1', 'l2']
 TRAIN:
   BASE_LEARNING_RATE: 0.002

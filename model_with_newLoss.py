@@ -150,7 +150,7 @@ class Model(nn.Module):
                   else:
                     #summary += f' {loss_type} : {loss_frac*get_loss(g_w_hat, g_w , loss_type)} ::: '
                     tot_loss+= loss_frac*get_loss(g_w_hat, g_w.detach() , loss_type) # target is detached
-                #print(summary)  
+                #print(summary) 
                 return tot_loss
                 ## added by udith
 
