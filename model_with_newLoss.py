@@ -261,5 +261,3 @@ class GenModel(nn.Module):
     def forward(self, x):
         return self.generate(self.layer_count-1, 1.0, z=x)
 
-
-
