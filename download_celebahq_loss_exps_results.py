@@ -8,6 +8,7 @@ except:pass
 os.mkdir(output_dir)
 
 for exp in os.listdir(artifact_dir):
+    if exp!='exp13':continue
     try:os.mkdir(f'{output_dir}/{exp}')
     except:pass
     for file_ in os.listdir(f'{artifact_dir}/{exp}'):

@@ -17,10 +17,11 @@ MODEL:
   START_CHANNEL_COUNT: 64
   DLATENT_AVG_BETA: 0.995
   MAPPING_LAYERS: 8
-OUTPUT_DIR: training_artifacts/celeba-hq256-loss_experiments/exp1
+OUTPUT_DIR: training_artifacts/celeba-hq256-loss_experiments/exp13
 LOSS:
-  fracs: [10, 0, 0]
-  types: ['lae', 'l1', 'l2']
+  fracs: [0, 10, 0, 0, 0, 0]
+  types: ['lae', 'l1', 'l2', 'ssim', 'gan_d', 'gan_g']
+  noise: [True, False]
 TRAIN:
   BASE_LEARNING_RATE: 0.002
   EPOCHS_PER_LOD: 30

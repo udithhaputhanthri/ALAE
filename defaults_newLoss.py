@@ -79,8 +79,9 @@ _C.TRAIN.REPORT_FREQ = [100, 80, 60, 30, 20, 10, 10, 5, 5]
 _C.TRAIN.LEARNING_RATES = [0.002]
 
 _C.LOSS= CN()
-_C.LOSS.types= ['lae', 'l2']
-_C.LOSS.fracs= [1.0, 0]
+_C.LOSS.types= ['lae', 'l2', 'gan_d', 'gan_g']
+_C.LOSS.fracs= [1, 0, 1, 1]
+_C.LOSS.noise= [True, True]
 
 def get_cfg_defaults():
     return _C.clone()

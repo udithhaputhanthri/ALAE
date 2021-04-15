@@ -113,14 +113,16 @@ class Model(nn.Module):
         discriminator_prediction = self.mapping_d(Z)
         return Z[:, :1], discriminator_prediction
 
-    def forward(self, x, lod, blend_factor, d_train, ae, loss_fracs=None, loss_types=None): 
+    def forward(self, x, lod, blend_factor, d_train, ae, loss_fracs=None, loss_types=None, noise_for_loss=None): 
         # blend_factor -> is not used for mixing styles but mixing different resolution levels in same image : search "ENCODERS/ DECODERS" in https://github.com/udithhaputhanthri/ALAE/blob/master/net.py
-        
         if ae:
+            #print('latent/ image space loss is computing started ... ')
+            #print('injecting noise for image generation, reconstruction (inside "if ae :"): ',noise_for_loss[0], noise_for_loss[1])
+            #print('dtype of noise variable [0], [1] (should be boolean) : ',type(noise_for_loss[0]), type(noise_for_loss[1]))
             self.encoder.requires_grad_(True)
 
             z = torch.randn(x.shape[0], self.latent_size)
-            s, rec = self.generate(lod, blend_factor, z=z, mixing=False, noise=True, return_styles=True)
+            s, rec = self.generate(lod, blend_factor, z=z, mixing=False, noise=noise_for_loss[0], return_styles=True)
 
             Z, d_result_real = self.encode(rec, lod, blend_factor)
 
@@ -154,7 +156,8 @@ class Model(nn.Module):
                   param.requires_grad=False
                   #print('off gradient computation : ',param.requires_grad, param.shape)
                 
-                g_w_hat  = self.decoder.forward(Z_detached.repeat(1, self.mapping_f.num_layers, 1), lod, blend_factor, True)
+                #print(f'X_detached.shape (should have 3 dims) : {Z_detached.shape}')
+                g_w_hat  = self.decoder.forward(Z_detached.repeat(1, self.mapping_f.num_layers, 1), lod, blend_factor, noise_for_loss[1])
                 
                 for param in self.decoder.parameters(): # use model.decoder.parameters(): to access all parameters of model.decoder
                   param.requires_grad=True
@@ -171,13 +174,16 @@ class Model(nn.Module):
                   loss_type = loss_types[i]
                   loss_frac = loss_fracs[i]
                   
+                  if loss_type=='gan_g' or loss_type=='gan_d':continue
                   if loss_type =='lae':
                     summary += f" {loss_type} : {loss_frac*Lae} ::: "
                     tot_loss+= loss_frac*Lae
                   else:
                     summary += f' {loss_type} : {loss_frac*get_loss(g_w_hat, g_w , loss_type)} ::: '
                     tot_loss+= loss_frac*get_loss(g_w_hat, g_w , loss_type) # target is detached
-                #print(summary)  
+                #print(summary)
+                #print('total loss (without GAN loss) : ', tot_loss)  
+                #print('latent/ image space loss is computing finished ... ')
                 return tot_loss
                 ## added by udith
 
@@ -192,7 +198,9 @@ class Model(nn.Module):
             _, d_result_fake = self.encode(Xp, lod, blend_factor)
 
             loss_d = losses.discriminator_logistic_simple_gp(d_result_fake, d_result_real, x)
-            return loss_d
+            
+            #print('loss d : ', loss_fracs[loss_types.index('gan_d')]*loss_d)
+            return loss_fracs[loss_types.index('gan_d')]*loss_d
         else:
             with torch.no_grad():
                 z = torch.randn(x.shape[0], self.latent_size)
@@ -204,8 +212,9 @@ class Model(nn.Module):
             _, d_result_fake = self.encode(rec, lod, blend_factor)
 
             loss_g = losses.generator_logistic_non_saturating(d_result_fake)
-
-            return loss_g
+            
+            #print('loss g : ',loss_fracs[loss_types.index('gan_g')]*loss_g)
+            return loss_fracs[loss_types.index('gan_g')]*loss_g
 
     def lerp(self, other, betta):
         if hasattr(other, 'module'):

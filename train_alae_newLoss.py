@@ -22,6 +22,7 @@ from train_alae import save_sample
 def train(cfg, logger, local_rank, world_size, distributed):
     loss_fracs= cfg.LOSS.fracs
     loss_types= cfg.LOSS.types
+    noise_for_loss= cfg.LOSS.noise
 
     torch.cuda.set_device(local_rank)
     model = Model(
@@ -218,20 +219,20 @@ def train(cfg, logger, local_rank, world_size, distributed):
             x.requires_grad = True
 
             encoder_optimizer.zero_grad()
-            loss_d = model(x, lod2batch.lod, blend_factor, d_train=True, ae=False)
+            loss_d = model(x, lod2batch.lod, blend_factor, d_train=True, ae=False, loss_fracs=loss_fracs, loss_types=loss_types)
             tracker.update(dict(loss_d=loss_d))
             loss_d.backward()
             encoder_optimizer.step()
 
             decoder_optimizer.zero_grad()
-            loss_g = model(x, lod2batch.lod, blend_factor, d_train=False, ae=False)
+            loss_g = model(x, lod2batch.lod, blend_factor, d_train=False, ae=False, loss_fracs=loss_fracs, loss_types=loss_types)
             tracker.update(dict(loss_g=loss_g))
             loss_g.backward()
             decoder_optimizer.step()
 
             encoder_optimizer.zero_grad()
             decoder_optimizer.zero_grad()
-            lae = model(x, lod2batch.lod, blend_factor, d_train=True, ae=True, loss_fracs=loss_fracs, loss_types=loss_types)
+            lae = model(x, lod2batch.lod, blend_factor, d_train=True, ae=True, loss_fracs=loss_fracs, loss_types=loss_types, noise_for_loss=noise_for_loss)
             tracker.update(dict(lae=lae))
             lae.backward()
             encoder_optimizer.step()
